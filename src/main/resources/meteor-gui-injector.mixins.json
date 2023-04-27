@@ -1,9 +1,9 @@
 {
   "required": true,
-  "package": "com.example.addon.mixin",
+  "package": "io.github.racoondog.meteorguiinjector.mixin",
   "compatibilityLevel": "JAVA_17",
   "client": [
-    "ExampleMixin"
+    "HandledScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1

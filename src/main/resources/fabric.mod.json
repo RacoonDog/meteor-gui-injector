@@ -17,11 +17,11 @@
   "environment": "client",
   "entrypoints": {
     "meteor": [
-      "com.example.addon.AddonTemplate"
+      "io.github.racoondog.meteorguiinjector.MeteorGuiInjector"
     ]
   },
   "mixins": [
-    "addon-template.mixins.json"
+    "meteor-gui-injector.mixins.json"
   ],
   "custom": {
     "meteor-client:color": "225,25,25",
