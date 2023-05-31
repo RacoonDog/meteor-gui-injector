@@ -1,13 +1,15 @@
-package io.github.racoondog.meteorguiinjector;
+package io.github.racoondog.meteorguiinjector.impl;
 
+import io.github.racoondog.meteorguiinjector.api.GuiContainer;
 import meteordevelopment.meteorclient.gui.GuiThemes;
 import meteordevelopment.meteorclient.gui.utils.Cell;
 import meteordevelopment.meteorclient.gui.widgets.containers.WContainer;
-import meteordevelopment.meteorclient.gui.widgets.containers.WSection;
 import meteordevelopment.meteorclient.gui.widgets.containers.WWindow;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.screen.Screen;
+
+import java.util.List;
 
 import static meteordevelopment.meteorclient.utils.Utils.getWindowHeight;
 import static meteordevelopment.meteorclient.utils.Utils.getWindowWidth;
@@ -15,13 +17,15 @@ import static meteordevelopment.meteorclient.utils.Utils.getWindowWidth;
 @Environment(EnvType.CLIENT)
 public class InjectedScreenContainer<T extends Screen> extends ScreenContainer {
     private final T parentScreen;
-    private final GuiHookRegistry.ScreenInfo screenInfo;
+    private final List<GuiContainer<T>> containers;
+    private final List<GuiHookRegistry.DirectScreenRenderer<T>> extras;
 
-    public InjectedScreenContainer(T parentScreen, GuiHookRegistry.ScreenInfo screenInfo) {
+    public InjectedScreenContainer(T parentScreen, List<GuiContainer<T>> containers, List<GuiHookRegistry.DirectScreenRenderer<T>> extras) {
         super(GuiThemes.get());
 
         this.parentScreen = parentScreen;
-        this.screenInfo = screenInfo;
+        this.containers = containers;
+        this.extras = extras;
     }
 
     @Override
@@ -49,20 +53,14 @@ public class InjectedScreenContainer<T extends Screen> extends ScreenContainer {
     }
 
     protected class WWindowController extends WContainer {
-        @SuppressWarnings("unchecked")
         @Override
         public void init() {
-            WWindow mainWindow = null;
-
-            for (var container : screenInfo.containers) {
-                if (container.uniqueWindow() || !screenInfo.subdivideMain()) {
-                    WWindow window = createWindow(this, container.name);
-                    container.initWidgets(theme, window, parentScreen);
-                } else {
-                    if (mainWindow == null) mainWindow = createWindow(this, "Main");
-                    WSection section = mainWindow.add(theme.section(container.name)).expandX().widget();
-                    container.initWidgets(theme, section, parentScreen);
-                }
+            for (var container : containers) {
+                WWindow window = createWindow(this, container.name);
+                container.initWidgets(theme, window, parentScreen);
+            }
+            for (var renderer : extras) {
+                renderer.initWidgets(theme, this, parentScreen);
             }
         }
 

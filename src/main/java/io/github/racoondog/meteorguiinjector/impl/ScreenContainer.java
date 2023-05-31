@@ -1,4 +1,4 @@
-package io.github.racoondog.meteorguiinjector;
+package io.github.racoondog.meteorguiinjector.impl;
 
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.gui.GuiKeyEvents;

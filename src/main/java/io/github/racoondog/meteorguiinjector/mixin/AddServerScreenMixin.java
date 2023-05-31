@@ -2,14 +2,14 @@ package io.github.racoondog.meteorguiinjector.mixin;
 
 import io.github.racoondog.meteorguiinjector.api.GuiInjector;
 import io.github.racoondog.meteorguiinjector.impl.ScreenContainer;
+import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.AddServerScreen;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.network.ServerInfo;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.screen.ScreenHandler;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,41 +17,36 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Environment(EnvType.CLIENT)
-@Mixin(HandledScreen.class)
-public abstract class HandledScreenMixin extends Screen {
+@Mixin(AddServerScreen.class)
+public abstract class AddServerScreenMixin extends Screen {
     @Nullable @Unique private ScreenContainer container;
 
-    private HandledScreenMixin(Text title) {
+    private AddServerScreenMixin(Text title) {
         super(title);
     }
 
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void injectConstructor(ScreenHandler handler, PlayerInventory inventory, Text title, CallbackInfo ci) {
+    private void injectConstructor(Screen parent, BooleanConsumer callback, ServerInfo server, CallbackInfo ci) {
         this.container = GuiInjector.createContainer(this);
     }
 
-    @Inject(method = "init()V", at = @At("TAIL"))
+    @Inject(method = "init", at = @At("HEAD"))
     private void injectInit(CallbackInfo ci) {
         if (container != null) container.init();
     }
 
-    @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
-    private void injectMouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
-        if (container != null && container.mouseClicked(mouseX, mouseY, button)) {
-            cir.setReturnValue(true);
-            cir.cancel();
-        }
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (container != null && container.mouseClicked(mouseX, mouseY, button)) return true;
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    @Inject(method = "mouseReleased", at = @At("HEAD"), cancellable = true)
-    private void injectMouseReleased(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
-        if (container != null && container.mouseReleased(mouseX, mouseY, button)) {
-            cir.setReturnValue(true);
-            cir.cancel();
-        }
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (container != null && container.mouseReleased(mouseX, mouseY, button)) return true;
+        return super.mouseReleased(mouseX, mouseY, button);
     }
 
     @Override
@@ -72,12 +67,10 @@ public abstract class HandledScreenMixin extends Screen {
         return super.keyReleased(keyCode, scanCode, modifiers);
     }
 
-    @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
-    private void injectKeyPressed(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
-        if (container != null && container.keyPressed(keyCode, scanCode, modifiers)) {
-            cir.setReturnValue(true);
-            cir.cancel();
-        }
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (container != null && container.keyPressed(keyCode, scanCode, modifiers)) return true;
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override
@@ -91,10 +84,9 @@ public abstract class HandledScreenMixin extends Screen {
         if (container != null) container.render(matrices, mouseX, mouseY, delta);
     }
 
-    @Override
-    public void resize(MinecraftClient client, int width, int height) {
+    @Inject(method = "resize", at = @At("TAIL"))
+    private void injectResize(MinecraftClient client, int width, int height, CallbackInfo ci) {
         if (container != null) container.resize(client, width, height);
-        super.resize(client, width, height);
     }
 
     @Override

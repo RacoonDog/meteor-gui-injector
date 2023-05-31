@@ -12,9 +12,10 @@ repositories {
     maven {
         name = "meteor-maven"
         url = "https://maven.meteordev.org/releases"
-        content {
-            includeGroup "meteordevelopment"
-        }
+        //content {
+        //    includeGroup "meteordevelopment"
+        //    includeGroup "com.github.LlamaLad7"
+        //}
     }
     maven {
         name = "meteor-maven-snapshots"
