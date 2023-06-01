@@ -39,9 +39,8 @@ public abstract class ScreenContainer {
     public Runnable taskAfterRender;
     protected Runnable enterAction;
 
-    public Screen parent;
-    private final WContainer root;
-
+    public final Screen parent;
+    protected final WContainer root;
     public final GuiTheme theme;
 
     public boolean locked, lockedAllowClose;
@@ -211,12 +210,6 @@ public abstract class ScreenContainer {
         }
 
         return false;
-    }
-
-    public void keyRepeated(int key, int modifiers) {
-        if (locked) return;
-
-        root.keyRepeated(key, modifiers);
     }
 
     //OVERRIDE

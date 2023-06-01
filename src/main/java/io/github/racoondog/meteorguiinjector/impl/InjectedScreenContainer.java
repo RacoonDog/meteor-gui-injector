@@ -1,13 +1,14 @@
 package io.github.racoondog.meteorguiinjector.impl;
 
-import io.github.racoondog.meteorguiinjector.api.GuiContainer;
+import io.github.racoondog.meteorguiinjector.api.ScreenElement;
 import meteordevelopment.meteorclient.gui.GuiThemes;
 import meteordevelopment.meteorclient.gui.utils.Cell;
 import meteordevelopment.meteorclient.gui.widgets.containers.WContainer;
 import meteordevelopment.meteorclient.gui.widgets.containers.WWindow;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.util.math.MatrixStack;
 
 import java.util.List;
 
@@ -15,17 +16,13 @@ import static meteordevelopment.meteorclient.utils.Utils.getWindowHeight;
 import static meteordevelopment.meteorclient.utils.Utils.getWindowWidth;
 
 @Environment(EnvType.CLIENT)
-public class InjectedScreenContainer<T extends Screen> extends ScreenContainer {
-    private final T parentScreen;
-    private final List<GuiContainer<T>> containers;
-    private final List<GuiHookRegistry.DirectScreenRenderer<T>> extras;
+public class InjectedScreenContainer extends ScreenContainer {
+    private final List<ScreenElement> elements;
 
-    public InjectedScreenContainer(T parentScreen, List<GuiContainer<T>> containers, List<GuiHookRegistry.DirectScreenRenderer<T>> extras) {
+    public InjectedScreenContainer(List<ScreenElement> elements) {
         super(GuiThemes.get());
 
-        this.parentScreen = parentScreen;
-        this.containers = containers;
-        this.extras = extras;
+        this.elements = elements;
     }
 
     @Override
@@ -48,19 +45,89 @@ public class InjectedScreenContainer<T extends Screen> extends ScreenContainer {
     }
 
     @Override
-    public void init() {
-        super.init();
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        for (var element : elements) {
+            if (element.mouseClicked(mouseX, mouseY, button)) return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        for (var element : elements) {
+            if (element.mouseReleased(mouseX, mouseY, button)) return true;
+        }
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
+    public void mouseMoved(double mouseX, double mouseY) {
+        elements.forEach(e -> e.mouseMoved(mouseX, mouseY));
+        super.mouseMoved(mouseX, mouseY);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+        for (var element : elements) {
+            if (element.mouseScrolled(mouseX, mouseY, amount)) return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, amount);
+    }
+
+    @Override
+    public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+        for (var element : elements) {
+            if (element.keyReleased(keyCode, scanCode, modifiers)) return true;
+        }
+        return super.keyReleased(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        for (var element : elements) {
+            if (element.keyPressed(keyCode, scanCode, modifiers)) return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public boolean charTyped(char chr, int keyCode) {
+        for (var element : elements) {
+            if (element.charTyped(chr, keyCode)) return true;
+        }
+        return super.charTyped(chr, keyCode);
+    }
+
+    @Override
+    public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
+        elements.forEach(e -> e.render(matrices, mouseX, mouseY, delta));
+        super.render(matrices, mouseX, mouseY, delta);
+    }
+
+    @Override
+    public void resize(MinecraftClient client, int width, int height) {
+        elements.forEach(e -> e.resize(client, width, height));
+        super.resize(client, width, height);
+    }
+
+    @Override
+    public void close() {
+        elements.forEach(ScreenElement::close);
+        super.close();
+    }
+
+    @Override
+    public void removed() {
+        elements.forEach(ScreenElement::removed);
+        super.removed();
     }
 
     protected class WWindowController extends WContainer {
         @Override
         public void init() {
-            for (var container : containers) {
-                WWindow window = createWindow(this, container.name);
-                container.initWidgets(theme, window, parentScreen);
-            }
-            for (var renderer : extras) {
-                renderer.initWidgets(theme, this, parentScreen);
+            for (var element : elements) {
+                WWindow window = createWindow(this, element.name);
+                element.initWidgets(window);
             }
         }
 
